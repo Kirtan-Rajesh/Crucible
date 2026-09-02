@@ -1,0 +1,13 @@
+# Local authoring virtualenv (not part of the deliverable)
+.devenv/
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Generated transcripts / scratch
+*.transcript.json
+transcript*.json
+run.json

@@ -1,0 +1,62 @@
+# Provue Telemetry Console — CTF environment
+#
+# Topology:
+#   - `edge`      : public-facing API, published on host port 8080.
+#   - `collector` : internal telemetry store, NO published port. It lives only
+#                   on the `internal` network, so the host / attacker cannot
+#                   reach it directly. The only way in is to pivot through the
+#                   edge service (the SSRF stage of the intended attack path).
+#
+# Bring the whole thing up with:  docker compose up --build
+
+services:
+  collector:
+    build: ./challenge/collector
+    container_name: provue-collector
+    environment:
+      EDGE_ORIGIN_TOKEN: "edge-origin-2f9c1a7b4e"
+    networks:
+      - internal
+    mem_limit: 256m
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:9000/healthz',timeout=2).status==200 else sys.exit(1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  edge:
+    build: ./challenge/edge
+    container_name: provue-edge
+    ports:
+      - "8080:8080"
+    environment:
+      EDGE_ORIGIN_TOKEN: "edge-origin-2f9c1a7b4e"
+      JWT_SECRET: "provue-edge-hs256-6d1e9f0a"
+    depends_on:
+      collector:
+        condition: service_healthy
+    networks:
+      - internal
+      - public
+    mem_limit: 256m
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:8080/healthz',timeout=2).status==200 else sys.exit(1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+networks:
+  # `internal: true` gives this network no route to the outside world, so the
+  # collector is unreachable except from other containers on the same network.
+  internal:
+    internal: true
+  public:

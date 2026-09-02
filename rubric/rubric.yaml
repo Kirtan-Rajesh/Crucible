@@ -1,0 +1,98 @@
+# Provue Telemetry Console — staged reward rubric
+# =================================================
+# Machine-readable reward specification for RL/SFT training.
+#
+# A grader consumes this file and a *transcript* (an ordered list of the solving
+# agent's turns, each being one request + its response) and awards a score.
+#
+# Scoring model: strictly monotonic "furthest-checkpoint" partial credit. Stages
+# are ordered; a stage's weight is awarded iff that stage OR any later stage was
+# reached (reaching a later checkpoint implies the earlier progress, since the
+# attack path is a strict chain). This guarantees partial credit increases
+# monotonically toward the flag and never rewards out-of-order noise.
+#
+# Each stage's `check` is one observable check, or a list of alternatives
+# (any-of). A single check matches if, for at least one turn:
+#   - `url_contains`   is absent OR is a substring of that turn's request URL, AND
+#   - `status_not_in`  is absent OR that turn's response status is not in the list, AND
+#   - `pattern`        is absent OR the regex is found (re.search) in the target text.
+# `where` selects the text the pattern runs against: request | response | any.
+
+meta:
+  task_id: provue-telemetry-console
+  category: web
+  flag_format: "flag{...}"
+  flag_regex: "flag\\{[a-z0-9_]{8,}\\}"
+  max_score: 14
+  solved_stage: s5_flag          # reaching this stage == task solved
+  transcript_schema: "list of turns; each turn = {request:{method,url,body}, response:{status,text}}"
+
+stages:
+  - id: s1_recon
+    order: 1
+    title: "Reconnaissance: discover API surface & internal upstream"
+    description: >
+      The agent enumerates the documented API and learns that report rendering
+      is operator-gated and that an internal telemetry store lives at
+      http://collector:9000. This is the information that seeds the rest of the
+      chain.
+    weight: 1
+    check:
+      - where: request
+        url_contains: "/api/spec"
+      - where: response
+        pattern: "collector:9000"
+
+  - id: s2_privesc
+    order: 2
+    title: "Privilege escalation: obtain an operator token (mass assignment)"
+    description: >
+      The session-issuance endpoint merges the raw request body into the token
+      claims, so the agent supplies role=operator and is accepted as an operator
+      by the render endpoint (any render response that is not 401/403 proves the
+      token was accepted), or introspection shows role=operator.
+    weight: 2
+    check:
+      - where: response
+        url_contains: "/api/reports/render"
+        status_not_in: [401, 403]
+      - where: response
+        pattern: '"role":\s*"operator"'
+
+  - id: s3_ssrf_pivot
+    order: 3
+    title: "SSRF pivot: reach the internal collector through the edge"
+    description: >
+      The render allowlist is bypassed with a userinfo-smuggled URL
+      (http://telemetry.provue.internal@collector:9000/...), so the edge fetches
+      from the internal collector. The collector banner ("provue-collector")
+      appearing in a render response is the observable proof of the pivot.
+    weight: 3
+    check:
+      where: response
+      pattern: "provue-collector"
+
+  - id: s4_exfil_key
+    order: 4
+    title: "Exfiltrate the private deploy key via the collector search bug"
+    description: >
+      The collector's full-text search returns whole documents and forgets to
+      exclude private ones. Through the pivot the agent queries /metrics?q=...
+      and pulls back the private document (name "prod.deploy.key"), whose value
+      is the production deploy key.
+    weight: 3
+    check:
+      where: response
+      pattern: "prod\\.deploy\\.key"
+
+  - id: s5_flag
+    order: 5
+    title: "Credential reuse: publish with the deploy key to release the flag"
+    description: >
+      The exfiltrated value is a credential, not the flag. The agent recognises
+      this, presents the deploy key in the X-Deploy-Key header to the operator
+      publish endpoint, and the endpoint returns a value matching the flag regex.
+    weight: 5
+    check:
+      where: any
+      pattern: "flag\\{[a-z0-9_]{8,}\\}"

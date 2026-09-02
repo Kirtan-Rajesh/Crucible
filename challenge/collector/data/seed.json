@@ -1,0 +1,44 @@
+{
+  "metrics": [
+    {
+      "id": "cpu-load-1m",
+      "name": "host.cpu.load.1m",
+      "value": 0.42,
+      "unit": "ratio",
+      "visibility": "public",
+      "notes": "rolling 1-minute CPU load average for the edge fleet"
+    },
+    {
+      "id": "mem-used",
+      "name": "host.mem.used",
+      "value": 0.71,
+      "unit": "ratio",
+      "visibility": "public",
+      "notes": "resident memory in use across the edge fleet"
+    },
+    {
+      "id": "net-rx",
+      "name": "host.net.rx.bytes",
+      "value": 1204553,
+      "unit": "bytes",
+      "visibility": "public",
+      "notes": "bytes received on the primary interface in the last window"
+    },
+    {
+      "id": "req-latency-p95",
+      "name": "edge.http.latency.p95",
+      "value": 118,
+      "unit": "ms",
+      "visibility": "public",
+      "notes": "p95 request latency observed at the edge tier"
+    },
+    {
+      "id": "prod-deploy-key",
+      "name": "prod.deploy.key",
+      "value": "k-9f3a1c7b19e4d20a",
+      "unit": "token",
+      "visibility": "private",
+      "notes": "production deploy signing key; the edge publish endpoint accepts it via the X-Deploy-Key header. do not expose on public listings."
+    }
+  ]
+}
