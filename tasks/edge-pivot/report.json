@@ -1,0 +1,36 @@
+{
+  "task_id": "edge-pivot",
+  "mode": "local",
+  "turn_budget": 16,
+  "reliability": {
+    "runs": 16,
+    "successes": 16,
+    "reliability": 1.0,
+    "median_solve_s": 0.454,
+    "max_solve_s": 0.479,
+    "solve_turns": 6
+  },
+  "bands": [
+    {
+      "profile": "competent",
+      "rollouts": 100,
+      "solved": 87,
+      "solve_rate": 0.87,
+      "median_turns_on_solve": 11
+    },
+    {
+      "profile": "naive",
+      "rollouts": 100,
+      "solved": 8,
+      "solve_rate": 0.08,
+      "median_turns_on_solve": 15
+    }
+  ],
+  "targets": {
+    "reliability_min": 0.875,
+    "solve_time_max_s": 300,
+    "competent_solve_min": 0.6,
+    "max_fail": 0.8,
+    "min_stages": 3
+  }
+}

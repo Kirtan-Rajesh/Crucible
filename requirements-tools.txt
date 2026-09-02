@@ -1,6 +1,5 @@
-# Dependencies for the *tooling* that runs outside the containers:
-# the reference solution, the grader, and the calibration harness.
-# (The challenge services pin their own deps in challenge/*/requirements.txt.)
+# Dependencies for the Crucible tooling that runs outside the containers:
+# the reference solver, the grader, and the calibration harness.
+# (Each challenge service pins its own deps under tasks/*/services/*/requirements.txt.)
 requests==2.32.3
-PyJWT==2.9.0
 PyYAML==6.0.2

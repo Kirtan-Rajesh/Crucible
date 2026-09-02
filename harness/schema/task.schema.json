@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://crucible.dev/schema/task.schema.json",
+  "title": "Crucible task manifest (task.yaml)",
+  "type": "object",
+  "required": ["id", "category", "flag", "environment", "rubric", "solver", "agent"],
+  "properties": {
+    "id": {"type": "string"},
+    "title": {"type": "string"},
+    "category": {"enum": ["web", "crypto", "pwn", "rev", "forensics", "misc"]},
+    "flag": {
+      "type": "object",
+      "required": ["regex"],
+      "properties": {"regex": {"type": "string"}, "example": {"type": "string"}}
+    },
+    "environment": {
+      "type": "object",
+      "required": ["edge_url"],
+      "properties": {
+        "compose": {"type": "string", "description": "compose file, relative to task dir (compose mode)"},
+        "edge_url": {"type": "string", "description": "URL the solver/agent connect to"},
+        "local_runner": {"type": "string", "description": "module:attr context manager for local mode"}
+      }
+    },
+    "rubric": {"type": "string", "description": "rubric file, relative to task dir"},
+    "solver": {
+      "type": "object",
+      "required": ["entry"],
+      "properties": {"entry": {"type": "string",
+        "description": "python script run as: python <entry> --base URL --transcript PATH [--quiet]"}}
+    },
+    "agent": {
+      "type": "object",
+      "required": ["entry"],
+      "properties": {"entry": {"type": "string",
+        "description": "module (relative to task dir) exposing PROFILES and run_rollout(base, profile, budget, seed)"}}
+    },
+    "tests": {"type": "array", "items": {"type": "string"},
+              "description": "self-contained test scripts run by `verify`"},
+    "calibration": {
+      "type": "object",
+      "properties": {
+        "turn_budget": {"type": "integer", "default": 16},
+        "reliability_runs": {"type": "integer"},
+        "rollouts": {"type": "integer"},
+        "targets": {
+          "type": "object",
+          "properties": {
+            "reliability_min": {"type": "number"},
+            "solve_time_max_s": {"type": "number"},
+            "competent_solve_min": {"type": "number"},
+            "max_fail": {"type": "number"},
+            "min_stages": {"type": "integer"}
+          }
+        }
+      }
+    }
+  }
+}

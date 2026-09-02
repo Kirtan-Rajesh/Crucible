@@ -1,0 +1,36 @@
+name: crucible-ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [edge-pivot]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install tooling deps
+        run: pip install -r requirements-tools.txt
+
+      - name: Verify task (tests + calibrate + acceptance gate)
+        # Local mode runs the identical service code as processes; no container
+        # engine needed. The gate exits non-zero if any acceptance target misses.
+        run: python -m harness.cli verify ${{ matrix.task }} --mode local --rollouts 60
+
+      - name: Upload calibration report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calibration-${{ matrix.task }}
+          path: |
+            tasks/${{ matrix.task }}/report.md
+            tasks/${{ matrix.task }}/report.json

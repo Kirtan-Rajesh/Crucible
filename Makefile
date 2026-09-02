@@ -1,30 +1,31 @@
-# Convenience targets. The canonical one-command entry point is `make up`
-# (== docker compose up --build). The others drive the tooling.
+# Crucible convenience targets. TASK defaults to the reference task.
+# All targets are thin wrappers over `python -m harness.cli`.
 
-.PHONY: up down solve grade test calibrate local deps
+TASK ?= edge-pivot
+PY   ?= python
 
-up:            ## build + run the challenge (edge on :8080, collector internal)
-	docker compose up --build
+.PHONY: deps solve grade calibrate gate verify up down test
 
-down:          ## stop and remove the challenge containers/networks
-	docker compose down -v
+deps:        ## install the harness/tooling deps
+	$(PY) -m pip install -r requirements-tools.txt
 
-deps:          ## install the tooling deps (solution / grader / calibration)
-	pip install -r requirements-tools.txt
+solve:       ## solve TASK and grade the run (local env)
+	$(PY) -m harness.cli solve $(TASK)
 
-solve:         ## run the reference solution against a running challenge
-	python solution/solve.py --base http://localhost:8080 --transcript run.json
+up:          ## build + run TASK's containers (Docker or Podman)
+	$(PY) -m harness.cli up $(TASK)
 
-grade:         ## grade the last transcript against the rubric
-	python rubric/grader.py --rubric rubric/rubric.yaml --transcript run.json
+down:        ## stop + remove TASK's containers
+	$(PY) -m harness.cli down $(TASK)
 
-test:          ## run grader-monotonicity + guardrail tests (starts a local stack)
-	python calibration/test_grader.py
-	python calibration/run_local.py & sleep 4; \
-	python calibration/test_guardrails.py; kill %1
+calibrate:   ## measure reliability + difficulty band -> report.json/report.md
+	$(PY) -m harness.cli calibrate $(TASK)
 
-calibrate:     ## measure reliability + difficulty band, write calibration/report.md
-	python calibration/calibrate.py --reliability-runs 16 --rollouts 100
+gate:        ## enforce TASK's acceptance targets (non-zero exit on FAIL)
+	$(PY) -m harness.cli gate $(TASK)
 
-local:         ## run edge + collector as local processes (no Docker)
-	python calibration/run_local.py
+verify:      ## tests + calibrate + gate (the full local check)
+	$(PY) -m harness.cli verify $(TASK)
+
+grade:       ## grade an existing transcript: make grade TRANSCRIPT=run.json
+	$(PY) -m harness.cli grade $(TASK) --transcript $(TRANSCRIPT)

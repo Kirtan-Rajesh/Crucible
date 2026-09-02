@@ -1,0 +1,62 @@
+# edge-pivot reference task environment.
+#
+# Topology:
+#   - edge      : public API, published on host port 8080.
+#   - collector : internal telemetry store, NO published port. It lives only on
+#                 the `internal` network, so the host / attacker cannot reach it
+#                 directly -- the only way in is to pivot through the edge
+#                 service (the SSRF stage of the intended attack path).
+#
+# Both services derive their shared secrets (edge-origin token, deploy key) and
+# the flag from CRUCIBLE_SEED, so a deployment is unique per seed yet fully
+# reproducible. Bring it up with:
+#
+#   docker compose -f compose.yaml up --build      # or: podman compose -f ...
+#
+# Works with Docker Compose and Podman Compose.
+
+services:
+  collector:
+    build: ./services/collector
+    container_name: edge-pivot-collector
+    environment:
+      CRUCIBLE_SEED: "${CRUCIBLE_SEED:-crucible-default}"
+    networks: [internal]
+    mem_limit: 256m
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  edge:
+    build: ./services/edge
+    container_name: edge-pivot-edge
+    ports:
+      - "8080:8080"
+    environment:
+      CRUCIBLE_SEED: "${CRUCIBLE_SEED:-crucible-default}"
+    depends_on:
+      collector:
+        condition: service_healthy
+    networks: [internal, public]
+    mem_limit: 256m
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+networks:
+  internal:
+    internal: true
+  public:
