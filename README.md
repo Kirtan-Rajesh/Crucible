@@ -122,6 +122,21 @@ docs/               contract.md · extending.md · calibration.md
 requirements-tools.txt   tooling deps (solver / grader / calibration)
 ```
 
+## Working on this repo
+
+Start with **[CLAUDE.md](CLAUDE.md)** — it has fresh-machine/VDI setup, the full
+command list, the invariants not to break (seed-derived secrets, the monotonic
+grader, the anti-reward-hacking `s5` check), the known gotchas discovered while
+building (Podman-on-Windows port forwarding, podman-compose healthcheck quirk),
+and a prioritized roadmap. The task contract for adding new challenges is in
+[docs/contract.md](docs/contract.md).
+
+```bash
+python -m venv .venv && . .venv/Scripts/activate   # or .venv/bin/activate
+pip install -r requirements-tools.txt
+python -m harness.cli verify edge-pivot            # tests + calibrate + gate
+```
+
 ## Notes
 
 - **Originality.** The application, its endpoints, the vulnerability chain, and
