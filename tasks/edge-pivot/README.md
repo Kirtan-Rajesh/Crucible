@@ -65,8 +65,13 @@ python -m harness.cli solve edge-pivot       # --mode local (default)
 ## Per-instance uniqueness
 
 The edge-origin token, deploy key, and flag are derived from `CRUCIBLE_SEED`
-(HMAC-SHA256), so every deployment is unique yet reproducible. For RL rollouts,
-vary the seed to prevent an agent from memorising a specific flag:
+(HMAC-SHA256), so every deployment is unique yet reproducible. The collector's
+public document set also carries seed-derived decoy noise (3-6 extra fleet
+metrics, seed-derived name/value) alongside the fixed private one, so the
+*shape* of what full-text search returns isn't fully memorizable either, only
+the intended path (query for a term matching the private doc's name) is
+stable. For RL rollouts, vary the seed to prevent an agent from memorising a
+specific flag or a specific document listing:
 
 ```bash
 CRUCIBLE_SEED=rollout-00042 python -m harness.cli solve edge-pivot

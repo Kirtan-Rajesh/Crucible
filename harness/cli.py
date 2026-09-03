@@ -6,11 +6,12 @@ Crucible CLI — one entry point for every task operation.
 Commands:
     up        build + run the task environment (containers, foreground)
     down      stop + remove the task environment
+    validate  check task.yaml/rubric.yaml against the JSON Schemas
     solve     run the reference solver against the task, then grade the run
     grade     grade an existing transcript:  grade <task> --transcript run.json
     calibrate measure reliability + difficulty band -> report.json / report.md
     gate      check the latest report against the task's acceptance targets
-    verify    run task tests, then calibrate + gate  (the full local check)
+    verify    validate, then run task tests, then calibrate + gate (full local check)
 
 <task> is a task name (resolved under tasks/<name>) or a path to a task dir.
 """
@@ -53,6 +54,11 @@ def cmd_down(task, args):
     return subprocess.run(_provider() + ["-f", str(compose), "down", "-v"]).returncode
 
 
+def cmd_validate(task, args):
+    from harness import validate
+    return validate.main([str(task)])
+
+
 def cmd_grade(task, args):
     from harness import grader
     from harness.runner import load_manifest
@@ -83,7 +89,12 @@ def cmd_calibrate(task, args):
     from harness import calibrate
     report = calibrate.calibrate(task, mode=args.mode,
                                  reliability_runs=args.reliability_runs,
-                                 rollouts=args.rollouts)
+                                 rollouts=args.rollouts,
+                                 seed_repeats=args.seed_repeats,
+                                 agent_entry=args.agent,
+                                 report_name=args.report_name,
+                                 measure_reliability=not args.skip_reliability,
+                                 budget_override=args.budget)
     print(json.dumps({"reliability": report["reliability"],
                       "bands": report["bands"]}, indent=2))
     return 0
@@ -97,6 +108,10 @@ def cmd_gate(task, args):
 def cmd_verify(task, args):
     from harness.runner import load_manifest
     import os
+    print("== validate ==")
+    rc = cmd_validate(task, args)
+    if rc != 0:
+        return rc
     m = load_manifest(task)
     env = dict(os.environ)
     env["PYTHONPATH"] = str(REPO_ROOT) + os.pathsep + env.get("PYTHONPATH", "")
@@ -115,8 +130,8 @@ def cmd_verify(task, args):
 
 
 COMMANDS = {
-    "up": cmd_up, "down": cmd_down, "solve": cmd_solve, "grade": cmd_grade,
-    "calibrate": cmd_calibrate, "gate": cmd_gate, "verify": cmd_verify,
+    "up": cmd_up, "down": cmd_down, "validate": cmd_validate, "solve": cmd_solve,
+    "grade": cmd_grade, "calibrate": cmd_calibrate, "gate": cmd_gate, "verify": cmd_verify,
 }
 
 
@@ -129,6 +144,15 @@ def main(argv=None):
     ap.add_argument("--transcript", help="transcript path for grade")
     ap.add_argument("--reliability-runs", type=int, default=16)
     ap.add_argument("--rollouts", type=int, default=100)
+    ap.add_argument("--seed-repeats", type=int, default=1,
+                    help="independent seed batches per profile band (variance evidence)")
+    ap.add_argument("--agent", default=None,
+                    help="override the manifest's agent module (e.g. llm_agent for a real-model measurement)")
+    ap.add_argument("--report-name", default="report",
+                    help="basename for report.json/report.md (use a distinct name for --agent runs)")
+    ap.add_argument("--skip-reliability", action="store_true",
+                    help="skip the reference-solver reliability pass (irrelevant when only comparing agent policies)")
+    ap.add_argument("--budget", type=int, default=None, help="override calibration.turn_budget")
     args = ap.parse_args(argv)
     task = resolve_task(args.task)
     return COMMANDS[args.command](task, args)

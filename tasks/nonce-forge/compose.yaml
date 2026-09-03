@@ -1,0 +1,28 @@
+# nonce-forge reference task environment.
+#
+# Single service: the attestation authority. No internal-only tier is needed
+# here -- the vulnerability is purely cryptographic (nonce reuse in the
+# service's own ECDSA signing), not a network-topology bug, so there is
+# nothing to pivot through.
+#
+#   docker compose -f compose.yaml up --build      # or: podman compose -f ...
+
+services:
+  attest:
+    build: ./services/attest
+    container_name: nonce-forge-attest
+    ports:
+      - "8080:8080"
+    environment:
+      CRUCIBLE_SEED: "${CRUCIBLE_SEED:-crucible-default}"
+    mem_limit: 256m
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped

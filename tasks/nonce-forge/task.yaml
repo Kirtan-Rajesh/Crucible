@@ -1,13 +1,13 @@
-# edge-pivot task manifest (Crucible task contract)
+# nonce-forge task manifest (Crucible task contract)
 # Validated against harness/schema/task.schema.json.
 
-id: edge-pivot
-title: "Edge Telemetry Console — SSRF pivot & credential-reuse chain"
-category: web
+id: nonce-forge
+title: "Fleet Attestation Service — ECDSA nonce-reuse key recovery"
+category: crypto
 
 flag:
   regex: "flag\\{[a-z0-9_]{8,}\\}"
-  example: "flag{edge_pivot_ab12cd34ef56}"   # value depends on CRUCIBLE_SEED
+  example: "flag{nonce_forge_ab12cd34ef56}"   # value depends on CRUCIBLE_SEED
 
 environment:
   compose: compose.yaml

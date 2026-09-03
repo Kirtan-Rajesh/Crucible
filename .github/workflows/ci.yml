@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        task: [edge-pivot]
+        task: [edge-pivot, nonce-forge]
     steps:
       - uses: actions/checkout@v4
 
@@ -21,10 +21,12 @@ jobs:
       - name: Install tooling deps
         run: pip install -r requirements-tools.txt
 
-      - name: Verify task (tests + calibrate + acceptance gate)
+      - name: Verify task (validate + tests + calibrate + acceptance gate)
         # Local mode runs the identical service code as processes; no container
-        # engine needed. The gate exits non-zero if any acceptance target misses.
-        run: python -m harness.cli verify ${{ matrix.task }} --mode local --rollouts 60
+        # engine needed. `verify` validates the manifest/rubric against the JSON
+        # Schemas first, then runs tests + calibrate + gate; it exits non-zero if
+        # any acceptance target misses.
+        run: python -m harness.cli verify ${{ matrix.task }} --mode local --rollouts 60 --seed-repeats 3
 
       - name: Upload calibration report
         if: always()

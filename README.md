@@ -14,6 +14,10 @@ inherit grading, calibration, and an enforced acceptance gate for free.
 > Built for the "Cybersecurity Training-Data Design" assignment (Track A). The
 > deliverable is one deeply-worked task **plus** the reusable harness it stands
 > on, so the same rigor scales past a single challenge.
+>
+> New to this project or the topic? Read **[docs/guide.md](docs/guide.md)** —
+> a from-scratch explanation of what this is, why it exists, and how every
+> piece works, with no assumed prior context.
 
 ---
 
@@ -31,8 +35,9 @@ inherit grading, calibration, and an enforced acceptance gate for free.
 
 Satisfy the contract (five small files, two tiny code interfaces — see
 [docs/contract.md](docs/contract.md)) and the harness does the rest. The reusable
-asset is the contract, not any one challenge; [docs/extending.md](docs/extending.md)
-shows the same spine carrying crypto, pwn, rev, and forensics tasks.
+asset is the contract, not any one challenge — proved by shipping a second task,
+`nonce-forge` (crypto), on the identical harness; [docs/extending.md](docs/extending.md)
+sketches the remaining categories (pwn, rev, forensics).
 
 ## Quickstart
 
@@ -50,9 +55,12 @@ python -m harness.cli solve edge-pivot --mode compose
 python -m harness.cli calibrate edge-pivot
 python -m harness.cli gate      edge-pivot
 
-# Everything at once (tests + calibrate + gate):
+# Everything at once (validate + tests + calibrate + gate):
 python -m harness.cli verify    edge-pivot
 ```
+
+Every command also works on the second reference task: swap `edge-pivot` for
+`nonce-forge`.
 
 ## The reference task — `edge-pivot` (web)
 
@@ -68,6 +76,23 @@ intended solution is a 5-stage chain:
 5. **Credential reuse** → replay the key to the publish endpoint → flag.
 
 Full write-up: [tasks/edge-pivot/README.md](tasks/edge-pivot/README.md).
+
+## The second reference task — `nonce-forge` (crypto)
+
+Built specifically to prove the contract generalizes rather than assert it —
+zero changes to `harness/`. A fleet attestation service signs ECDSA
+(secp256r1) attestations with a nonce that never rotates:
+
+1. **Recon** → the spec discloses the exact claim message a valid signature
+   must cover to release the flag.
+2. **Pubkey** → fetch the fleet authority's public key.
+3. **Collect** → two attestations for arbitrary device ids come back with the
+   *same* `r` — the nonce-reuse tell.
+4. **Recover + forge** → modular arithmetic recovers the private key offline;
+   sign the required claim with a fresh nonce.
+5. **Redeem → flag**.
+
+Full write-up: [tasks/nonce-forge/README.md](tasks/nonce-forge/README.md).
 
 ## Staged rewards (the important part)
 
@@ -86,73 +111,113 @@ flag.
 | `s4_exfil_key` | exfiltrate the private deploy key | 3 | a response contains `prod.deploy.key` |
 | `s5_flag` | reuse the key to publish → flag | 5 | flag regex in an **authorised** publish (200) response |
 
-The `s5` check requires the flag to come from an authorised publish, closing the
-flag-echo reward-hack. The grader also supports `negate` checks for further
-anti-gaming (see [docs/contract.md](docs/contract.md)).
+The `s5` check requires the flag to come from an authorised publish. On top of
+that, `rubric.yaml` carries a `guards:` entry: if the flag string ever appears
+in *any* turn before the one that legitimately reaches `s5`, the grader voids
+the **entire** transcript's score rather than trusting the rest (see
+`harness/grader.py`; `tests/test_guards.py` proves this on a synthetic
+reward-hack transcript). Same mechanism ships on `nonce-forge`.
 
-## Calibration — measured, then enforced
+## Calibration — measured, then enforced (with real variance, and a real model)
 
 `calibrate` runs the reference solver repeatedly and drives a **live stochastic
 agent** (competent + naive profiles) against the real service under the 16-turn
-budget. `gate` turns the assignment's numeric criteria into a CI-friendly
-PASS/FAIL. Latest run ([tasks/edge-pivot/report.md](tasks/edge-pivot/report.md)):
+budget. `--seed-repeats N` runs N independent, non-overlapping seed batches
+instead of one fixed sequence, so a reported rate is evidence, not a lucky
+seed — the current numbers are the pooled result of 5×100 rollouts per profile.
+`gate` turns the assignment's numeric criteria into a CI-friendly PASS/FAIL.
+Latest run ([tasks/edge-pivot/report.md](tasks/edge-pivot/report.md)):
 
 ```
 acceptance gate: edge-pivot
 criterion                     measured            target   verdict
 reference reliability           100.0%          >= 87.5%      PASS   (16/16)
-reference solve time            0.49s             < 300s      PASS
-competent solve rate             87.0%            >= 60%      PASS   (median 11/16 turns)
-competent failure rate           13.0%             < 80%      PASS
+reference solve time            0.76s             < 300s      PASS
+competent solve rate             91.6%            >= 60%      PASS   (mean of 5 batches, range [87%, 94%])
+competent failure rate            8.4%             < 80%      PASS
 gradable reward stages               5              >= 3      PASS
 RESULT: PASS
 ```
 
-Naive-profile solve rate is **8%** — the skill gradient that makes the reward
-trainable rather than a coin flip. The competent agent is a deliberately
-imperfect proxy (a stronger real agent scores higher), so the task sits safely
-inside the learnable band. Methodology: [docs/calibration.md](docs/calibration.md).
+Naive-profile solve rate is **~9%** — the skill gradient that makes the reward
+trainable rather than a coin flip. Methodology: [docs/calibration.md](docs/calibration.md).
+
+**The scripted "competent" profile is a hand-tuned proxy, not a measurement —
+and testing it against a real model found that out the hard way, then got
+fixed.** `agent.py`'s probabilities are an assumption of what a capable agent
+does; `llm_agent.py` drives the identical live service through an actual
+Gemini model's decisions (one HTTP action per turn, graded by the same
+`harness.grader`, no vulnerability hints). First result: at the same 16-turn
+budget, `gemini-2.5-flash` solved **0/15** — even though the transcripts show
+it independently found the mass-assignment bug and the userinfo SSRF bypass
+with no hints, just too late in the budget.
+
+That pointed at turn economy, not capability, as the bottleneck — so four
+scaffold fixes were tried, each measured before the next: a **state
+scratchpad** (stop the model burning turns re-deriving a bearer token it
+already has), **enabling the model's reasoning** (`thinking`, previously off
+for cost), a **reasoning-consistency nudge** (traced `thoughtsTokenCount`
+showed the model quietly stopped deliberating after turn 2, right when the
+hard decision was still ahead), and a **pinned-documentation scratchpad**
+(its own API-doc response stays restated instead of relying on long-context
+recall). None tell the model anything about the vulnerability. Nothing
+tested ever reliably solves at the declared 16-turn budget — but at 24 turns,
+every scaffold improvement's signal shows up, topping out at **4/8 = 50%**
+(thinking *off*, full scaffold) — roughly 4x the first real-agent number.
+Counter-intuitively, the identical prompt change made the *thinking* profile
+worse (37.5% → 12.5%): diagnostics suggest it used the extra encouragement to
+deliberate into wrong, more "creative" hypotheses (SQL injection, forging a
+JWT by hand) instead of the actual simple bug. None of this touches
+`task.yaml`'s declared 16-turn budget or the CI-enforced `report.json`; every
+real-agent run lives in its own separately-named `report.llm*.json` file.
+Full numbers and the iteration log:
+[docs/calibration.md](docs/calibration.md#real-agent-measurement-gemini).
 
 ## Repository layout
 
 ```
-harness/            reusable engine (grader, calibrate, gate, runner, cli, schemas)
-tasks/edge-pivot/   reference web task (services, solver, agent, rubric, tests)
-docs/               contract.md · extending.md · calibration.md
+harness/            reusable engine (grader, calibrate, gate, validate, runner, cli, schemas)
+tasks/edge-pivot/   reference web task (services, solver, agent + llm_agent, rubric, tests)
+tasks/nonce-forge/  reference crypto task (same shape, ECDSA nonce-reuse)
+docs/               guide.md · contract.md · extending.md · calibration.md
 requirements-tools.txt   tooling deps (solver / grader / calibration)
+.env                GEMINI_API_KEY for the real-agent measurement (git-ignored)
 ```
 
 ## Working on this repo
 
 Start with **[CLAUDE.md](CLAUDE.md)** — it has fresh-machine/VDI setup, the full
 command list, the invariants not to break (seed-derived secrets, the monotonic
-grader, the anti-reward-hacking `s5` check), the known gotchas discovered while
-building (Podman-on-Windows port forwarding, podman-compose healthcheck quirk),
-and a prioritized roadmap. The task contract for adding new challenges is in
-[docs/contract.md](docs/contract.md).
+grader, the `guards:` anti-reward-hacking check), known gotchas, and a
+prioritized roadmap. The task contract for adding new challenges is in
+[docs/contract.md](docs/contract.md) — `nonce-forge` is a worked proof that
+following it is enough, no harness changes required.
 
 ```bash
 python -m venv .venv && . .venv/Scripts/activate   # or .venv/bin/activate
 pip install -r requirements-tools.txt
-python -m harness.cli verify edge-pivot            # tests + calibrate + gate
+python -m harness.cli verify edge-pivot --seed-repeats 5   # validate + tests + calibrate + gate
 ```
 
 ## Notes
 
-- **Originality.** The application, its endpoints, the vulnerability chain, and
-  the flag are original and written from scratch. The individual *techniques* are
-  standard and cited in the task README (mass assignment — OWASP API3; SSRF via
-  URL parser differentials — RFC 3986 §3.2.1 / PortSwigger; broken function-level
-  authz — OWASP API1/API3); the challenge tests reasoning over a novel chain, not
-  a secret trick.
+- **Originality.** Both applications, their endpoints, vulnerability chains,
+  and flags are original and written from scratch. The individual *techniques*
+  are standard and cited in each task's README (mass assignment — OWASP API3;
+  SSRF via URL parser differentials — RFC 3986 §3.2.1 / PortSwigger; broken
+  function-level authz — OWASP API1/API3; ECDSA nonce reuse — classic
+  signature-scheme cryptanalysis); the challenges test reasoning over a novel
+  chain, not a secret trick.
 - **Per-instance uniqueness.** Secrets and the flag derive from `CRUCIBLE_SEED`
   (HMAC-SHA256), so rollouts can be made unique to resist memorization while
-  staying reproducible; the solver and grader are seed-agnostic.
-- **Reproducibility.** Container build is pinned (`python:3.11.9-slim-bookworm`,
-  pinned deps). Verified end-to-end on Podman: cold build + up in **28 s** (target
-  < 10 min); an attacker container on the task network solves it for the same
-  flag (graded 14/14) while the collector stays unreachable from that network,
-  proving the pivot is mandatory. The harness auto-detects Docker or Podman, and a
-  no-Docker local mode runs the identical code for machines without an engine.
+  staying reproducible; the solver and grader are seed-agnostic. `edge-pivot`'s
+  collector also seeds in decoy documents so the *shape* of a full listing
+  isn't memorizable either.
+- **Reproducibility.** Container builds are pinned (`python:3.11.9-slim-bookworm`,
+  pinned deps). Verified end-to-end on Podman for both tasks: cold `--no-cache`
+  builds in 15-31s (target < 10 min), containers healthy in ~9s, full solves
+  14/14 through the real topology via `localhost` after `up`. The harness
+  auto-detects Docker or Podman, and a no-Docker local mode runs the identical
+  code for machines without an engine.
 - **Ground rules.** Everything runs in isolated, self-owned containers; nothing
   targets third-party systems; the environment is fully offline once built.

@@ -4,13 +4,16 @@
 TASK ?= edge-pivot
 PY   ?= python
 
-.PHONY: deps solve grade calibrate gate verify up down test
+.PHONY: deps solve grade calibrate gate validate verify up down test
 
 deps:        ## install the harness/tooling deps
 	$(PY) -m pip install -r requirements-tools.txt
 
 solve:       ## solve TASK and grade the run (local env)
 	$(PY) -m harness.cli solve $(TASK)
+
+validate:    ## schema-check TASK's task.yaml/rubric.yaml
+	$(PY) -m harness.cli validate $(TASK)
 
 up:          ## build + run TASK's containers (Docker or Podman)
 	$(PY) -m harness.cli up $(TASK)

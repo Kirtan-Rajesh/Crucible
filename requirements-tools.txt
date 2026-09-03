@@ -1,5 +1,9 @@
 # Dependencies for the Crucible tooling that runs outside the containers:
-# the reference solver, the grader, and the calibration harness.
-# (Each challenge service pins its own deps under tasks/*/services/*/requirements.txt.)
+# reference solvers, agents, the grader, and the calibration harness.
+# (Each challenge service pins its own deps under tasks/*/services/*/requirements.txt;
+# this file additionally covers what task-side solver.py/agent.py/tests need when
+# run directly by the harness in --mode local, e.g. CI.)
 requests==2.32.3
 PyYAML==6.0.2
+jsonschema==4.23.0
+ecdsa==0.19.0

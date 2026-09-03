@@ -11,3 +11,7 @@ __pycache__/
 *.transcript.json
 transcript*.json
 run.json
+
+# Secrets
+.env
+*.env

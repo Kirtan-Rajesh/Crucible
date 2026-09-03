@@ -5,6 +5,22 @@
   "type": "object",
   "required": ["meta", "stages"],
   "properties": {
+    "guards": {
+      "type": "array",
+      "description": "anti-reward-hacking invariants; a violation voids the whole score",
+      "items": {
+        "type": "object",
+        "required": ["id", "pattern", "forbidden_before"],
+        "properties": {
+          "id": {"type": "string"},
+          "pattern": {"type": "string", "description": "regex (re.search)"},
+          "where": {"enum": ["request", "response", "any"], "default": "response"},
+          "forbidden_before": {"type": "string",
+            "description": "stage id -- pattern must not match any turn before this stage is legitimately reached"}
+        },
+        "additionalProperties": false
+      }
+    },
     "meta": {
       "type": "object",
       "required": ["task_id", "flag_regex", "solved_stage"],

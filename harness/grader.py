@@ -20,6 +20,16 @@ stage i is credited iff it or any later stage was reached (reaching a later
 checkpoint on a strict chain implies the earlier progress). Partial credit is
 therefore monotonic toward the flag and never rewards out-of-order noise.
 
+Anti-reward-hacking guards (optional, top-level `guards:` in the rubric):
+    id:               guard identifier
+    pattern:          regex checked against turn text
+    where:            request | response | any    (default: response)
+    forbidden_before: a stage id -- `pattern` must not match any turn strictly
+                       before the first turn that legitimately reaches that stage
+A violated guard zeroes the *entire* score for that transcript: it means the
+reward signal leaked (e.g. the flag appearing before it was legitimately
+earned), so nothing about the run can be trusted, not just the offending stage.
+
 Usage:
     python -m harness.grader --rubric <rubric.yaml> --transcript <run.json> [--json]
 """
@@ -78,6 +88,31 @@ def _stage_reached(stage, turns):
     return any(_one_check_matches(c, turns) for c in checks)
 
 
+def _first_matching_index(stage, turns):
+    """Index of the first turn (0-based) that matches this stage's check, or None."""
+    for i in range(len(turns)):
+        if _stage_reached(stage, turns[:i + 1]) and not _stage_reached(stage, turns[:i]):
+            return i
+    return None
+
+
+def _guard_violations(guards, stages, turns):
+    stage_by_id = {s["id"]: s for s in stages}
+    violations = []
+    for guard in guards:
+        target = stage_by_id.get(guard.get("forbidden_before"))
+        boundary = _first_matching_index(target, turns) if target else None
+        prefix = turns if boundary is None else turns[:boundary]
+        regex = re.compile(guard["pattern"])
+        where = guard.get("where", "response")
+        for i, turn in enumerate(prefix):
+            if regex.search(_turn_text(turn, where)):
+                violations.append({"id": guard["id"], "turn": i + 1,
+                                   "forbidden_before": guard.get("forbidden_before")})
+                break
+    return violations
+
+
 def grade(rubric, transcript):
     turns = transcript.get("turns", [])
     stages = sorted(rubric["stages"], key=lambda s: s["order"])
@@ -86,19 +121,22 @@ def grade(rubric, transcript):
     cumulative = [any(reached_raw[j] for j in range(i, len(stages)))
                   for i in range(len(stages))]
 
+    guard_violations = _guard_violations(rubric.get("guards", []), stages, turns)
+    voided = bool(guard_violations)
+
     per_stage, total = [], 0
     for stage, raw, credited in zip(stages, reached_raw, cumulative):
-        awarded = stage["weight"] if credited else 0
+        awarded = 0 if voided else (stage["weight"] if credited else 0)
         total += awarded
         per_stage.append({
             "id": stage["id"], "order": stage["order"], "title": stage["title"],
             "weight": stage["weight"], "reached": bool(raw),
-            "credited": bool(credited), "score": awarded,
+            "credited": bool(credited) and not voided, "score": awarded,
         })
 
     max_score = sum(s["weight"] for s in stages)
     solved_stage = rubric["meta"].get("solved_stage")
-    solved = any(s["credited"] for s in per_stage if s["id"] == solved_stage)
+    solved = (not voided) and any(s["credited"] for s in per_stage if s["id"] == solved_stage)
 
     return {
         "task_id": rubric["meta"].get("task_id"),
@@ -107,6 +145,7 @@ def grade(rubric, transcript):
         "solved": bool(solved),
         "stages_reached": sum(1 for s in per_stage if s["credited"]),
         "stages": per_stage,
+        "guard_violations": guard_violations,
     }
 
 
@@ -114,6 +153,8 @@ def print_human(result):
     print(f"task: {result['task_id']}")
     print(f"score: {result['total_score']}/{result['max_score']} "
           f"({result['fraction']*100:.0f}%)   solved={result['solved']}")
+    if result.get("guard_violations"):
+        print(f"GUARD VIOLATED -- score voided: {result['guard_violations']}")
     print("-" * 68)
     print(f"{'stage':<22}{'weight':>7}{'reached':>9}{'credit':>8}{'score':>7}")
     for s in result["stages"]:

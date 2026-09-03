@@ -1,0 +1,125 @@
+{
+  "task_id": "nonce-forge",
+  "mode": "local",
+  "turn_budget": 16,
+  "agent": "agent",
+  "reliability": {
+    "runs": 16,
+    "successes": 16,
+    "reliability": 1.0,
+    "median_solve_s": 0.556,
+    "max_solve_s": 0.747,
+    "solve_turns": 5
+  },
+  "bands": [
+    {
+      "profile": "competent",
+      "rollouts": 500,
+      "solved": 421,
+      "solve_rate": 0.842,
+      "median_turns_on_solve": 6,
+      "repeats": 5,
+      "solve_rate_mean": 0.842,
+      "solve_rate_stdev": 0.0319,
+      "solve_rate_range": [
+        0.8,
+        0.89
+      ],
+      "batches": [
+        {
+          "seed_start": 1000,
+          "rollouts": 100,
+          "solved": 84,
+          "solve_rate": 0.84,
+          "median_turns_on_solve": 6
+        },
+        {
+          "seed_start": 1100,
+          "rollouts": 100,
+          "solved": 80,
+          "solve_rate": 0.8,
+          "median_turns_on_solve": 6
+        },
+        {
+          "seed_start": 1200,
+          "rollouts": 100,
+          "solved": 84,
+          "solve_rate": 0.84,
+          "median_turns_on_solve": 6
+        },
+        {
+          "seed_start": 1300,
+          "rollouts": 100,
+          "solved": 89,
+          "solve_rate": 0.89,
+          "median_turns_on_solve": 6
+        },
+        {
+          "seed_start": 1400,
+          "rollouts": 100,
+          "solved": 84,
+          "solve_rate": 0.84,
+          "median_turns_on_solve": 6
+        }
+      ]
+    },
+    {
+      "profile": "naive",
+      "rollouts": 500,
+      "solved": 89,
+      "solve_rate": 0.178,
+      "median_turns_on_solve": 9,
+      "repeats": 5,
+      "solve_rate_mean": 0.178,
+      "solve_rate_stdev": 0.0249,
+      "solve_rate_range": [
+        0.16,
+        0.21
+      ],
+      "batches": [
+        {
+          "seed_start": 1000,
+          "rollouts": 100,
+          "solved": 16,
+          "solve_rate": 0.16,
+          "median_turns_on_solve": 10
+        },
+        {
+          "seed_start": 1100,
+          "rollouts": 100,
+          "solved": 21,
+          "solve_rate": 0.21,
+          "median_turns_on_solve": 9
+        },
+        {
+          "seed_start": 1200,
+          "rollouts": 100,
+          "solved": 16,
+          "solve_rate": 0.16,
+          "median_turns_on_solve": 10
+        },
+        {
+          "seed_start": 1300,
+          "rollouts": 100,
+          "solved": 16,
+          "solve_rate": 0.16,
+          "median_turns_on_solve": 8
+        },
+        {
+          "seed_start": 1400,
+          "rollouts": 100,
+          "solved": 20,
+          "solve_rate": 0.2,
+          "median_turns_on_solve": 8
+        }
+      ]
+    }
+  ],
+  "targets": {
+    "reliability_min": 0.875,
+    "solve_time_max_s": 300,
+    "competent_solve_min": 0.6,
+    "max_fail": 0.8,
+    "min_stages": 3
+  }
+}
