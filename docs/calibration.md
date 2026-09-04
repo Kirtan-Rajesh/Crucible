@@ -59,6 +59,21 @@ impossible (fail < 80%). *Measured* (5 batches × 100 rollouts,
 
 ## Real-agent measurement (Gemini)
 
+> **Correction — extractor bug found during live testing (supersedes the
+> per-run figures in this section).** Re-running the real agent surfaced a bug in
+> `llm_agent._extract_json`: a greedy brace match swallowed the model's action
+> whenever it appended reasoning prose after the JSON, so those turns failed to
+> parse and the agent stalled instead of acting. It is now fixed to decode the
+> first valid action object. **Corrected measurement:** with the fix,
+> `gemini-2.5-flash` solves **0/6** at the 16-turn budget (thinking on *and*
+> off). Transcripts show why this is honest difficulty, not a harness artifact —
+> the model does recon cleanly and finds the operator-gated render endpoint, but
+> never discovers the mass-assignment (it changes the `user` field in the session
+> body, never `role`), so it never escalates. The corrected 16-turn result lives
+> in `report.llm-fixed-b16.json`. The tables and follow-ups below were measured
+> **before** this fix and are kept only as a record of the scaffold exploration;
+> treat their specific solve rates as unreliable.
+
 The scripted policy above is a *proxy* by construction (see `agent.py`'s
 docstring): its probabilities are an assumption about what a competent agent
 does, not a measurement of one. `tasks/edge-pivot/llm_agent.py` closes that
@@ -165,16 +180,16 @@ cost, not about whether the underlying insight is learnable.
 None of this touches `task.yaml`'s declared 16-turn acceptance budget or
 `report.json`, which stay pinned to the scripted-proxy baseline the CI gate
 reads -- every real-agent run lives in its own separately-named
-`report.llm-v4*.json` file, for exactly the reason given above.
+`report.llm-fixed*.json` file, for exactly the reason given above.
 
 Reproduce (costs real Gemini API calls; needs `GEMINI_API_KEY`):
 ```bash
 # Baseline profile (thinking off) and the thinking-enabled profile both run
 # automatically -- PROFILES in llm_agent.py has both:
-python -m harness.cli calibrate edge-pivot --agent llm_agent --rollouts 10 \
-    --skip-reliability --report-name report.llm-v4               # budget 16 (task default)
-python -m harness.cli calibrate edge-pivot --agent llm_agent --rollouts 8 \
-    --skip-reliability --report-name report.llm-v4-b24 --budget 24
+python -m harness.cli calibrate edge-pivot --agent llm_agent --rollouts 6 \
+    --skip-reliability --report-name report.llm-fixed-b16          # budget 16 (task default)
+python -m harness.cli calibrate edge-pivot --agent llm_agent --rollouts 6 \
+    --skip-reliability --report-name report.llm-fixed-b24 --budget 24
 ```
 
 ## Reproduce

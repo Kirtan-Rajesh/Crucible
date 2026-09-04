@@ -3,7 +3,14 @@
 # (Each challenge service pins its own deps under tasks/*/services/*/requirements.txt;
 # this file additionally covers what task-side solver.py/agent.py/tests need when
 # run directly by the harness in --mode local, e.g. CI.)
+#
+# In --mode local the harness launches the task services as plain processes
+# (app.py, not gunicorn), so their runtime deps must be here too: Flask (both
+# tasks), PyJWT (edge-pivot), ecdsa (nonce-forge). gunicorn is container-only
+# and intentionally omitted.
 requests==2.32.3
 PyYAML==6.0.2
 jsonschema==4.23.0
 ecdsa==0.19.0
+Flask==3.0.3
+PyJWT==2.9.0

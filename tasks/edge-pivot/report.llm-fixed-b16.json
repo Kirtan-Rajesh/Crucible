@@ -7,7 +7,7 @@
   "bands": [
     {
       "profile": "gemini-flash",
-      "rollouts": 12,
+      "rollouts": 6,
       "solved": 0,
       "solve_rate": 0.0,
       "median_turns_on_solve": null,
@@ -21,7 +21,7 @@
       "batches": [
         {
           "seed_start": 1000,
-          "rollouts": 12,
+          "rollouts": 6,
           "solved": 0,
           "solve_rate": 0.0,
           "median_turns_on_solve": null
@@ -30,7 +30,7 @@
     },
     {
       "profile": "gemini-flash-thinking",
-      "rollouts": 12,
+      "rollouts": 6,
       "solved": 0,
       "solve_rate": 0.0,
       "median_turns_on_solve": null,
@@ -44,7 +44,7 @@
       "batches": [
         {
           "seed_start": 1000,
-          "rollouts": 12,
+          "rollouts": 6,
           "solved": 0,
           "solve_rate": 0.0,
           "median_turns_on_solve": null

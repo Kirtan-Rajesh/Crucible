@@ -22,6 +22,19 @@ the human reference solver and the scripted proxy.
 Requires GEMINI_API_KEY (env var, or a .env file at the repo root with
 GEMINI_API_KEY=...). Costs real API calls: keep --rollouts modest.
 
+## Correction (extractor bug, found in live testing)
+
+The solve rates in the iteration log below were measured before a bug in
+`_extract_json` was found and fixed: it used a greedy `{...}` match that
+swallowed the model's action whenever the model appended reasoning prose after
+the JSON, so those turns failed to parse and the agent stalled without acting.
+`_extract_json` now decodes the FIRST valid action object and ignores trailing
+text. With the fix, `gemini-2.5-flash` solves 0/6 at the 16-turn budget (thinking
+on and off) -- the model does recon and finds the operator-gated endpoint but
+never discovers the mass-assignment (it changes `user`, never `role`). Treat the
+specific numbers in the table below as pre-fix and unreliable; regenerate current
+numbers with `--report-name report.llm-fixed-*` (see docs/calibration.md).
+
 ## Scaffold iteration log (what improved solve rate, what didn't)
 
 The first version (bare JSON-action loop, thinking disabled) solved 0/15 at a
@@ -174,15 +187,27 @@ def _load_dotenv():
 
 
 def _extract_json(text):
+    """Extract the model's action object.
+
+    Models frequently emit the required JSON action followed by prose reasoning
+    (or a second object). Decode the FIRST valid JSON object that looks like an
+    action (`raw_decode` stops at the end of that object and ignores whatever
+    trailing text follows), scanning past any prose that precedes it.
+    """
     text = text.strip()
     fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     if fence:
         text = fence.group(1)
-    else:
-        brace = re.search(r"\{.*\}", text, re.DOTALL)
-        if brace:
-            text = brace.group(0)
-    return json.loads(text)
+    dec = json.JSONDecoder()
+    for i, ch in enumerate(text):
+        if ch == "{":
+            try:
+                obj, _ = dec.raw_decode(text[i:])
+            except ValueError:
+                continue
+            if isinstance(obj, dict) and "path" in obj:
+                return obj
+    raise ValueError("no JSON action object with a 'path' field found")
 
 
 def _call_gemini(model, temperature, contents, seed, api_key, thinking_budget=None):

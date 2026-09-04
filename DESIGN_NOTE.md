@@ -43,20 +43,25 @@ would.
 **The centerpiece honesty finding.** "Competent agent solves ~90%" is a number
 the *scripted* policy was tuned to produce, not a measurement. `llm_agent.py`
 drives the identical service through a real model (Gemini 2.5 Flash), same
-grader, no hints: **0/15 at the 16-turn budget**, though transcripts show it
-finds the bugs unprompted, just too late. Diagnosis pointed at turn economy, not
-capability; four generic scaffold fixes (state scratchpad, thinking, a reasoning
-nudge, pinned docs), each measured, reached **50% at 24 turns** — still 0% at 16.
-The CI gate stays pinned to the declared scripted baseline (`report.json`);
-real-agent runs live in separate `report.llm-v4*.json` files, precisely so the
-uncomfortable result isn't quietly tuned away. Full log:
+grader, no hints. Running it live also caught a bug in my *own* eval harness —
+the agent's JSON extractor used a greedy brace match that swallowed the model's
+action whenever it trailed reasoning prose, stalling the agent; fixed to decode
+the first valid action object (earlier per-run figures were measured through that
+bug and are superseded). **Corrected:** at the 16-turn budget `gemini-2.5-flash`
+solves **0/6** (thinking on and off). Transcripts show why it's honest difficulty
+— the model does recon and finds the operator-gated endpoint but never discovers
+the mass-assignment (it changes `user`, never `role`). So the scripted proxy's
+~92% is an optimistic upper bound and the task has real headroom for a mid-tier
+model. The gate stays pinned to the scripted baseline (`report.json`); real-agent
+runs live in `report.llm-fixed-*.json`. Full log:
 [docs/calibration.md](docs/calibration.md).
 
-**Limitations (flagged, not hidden).** Real-agent samples are small (n=8–15);
-the "thinking hurts at 24 turns" note is a plausible transcript reading, not a
-controlled ablation; `llm_agent.py`'s one-call-per-turn interface is deliberately
-simple, so its numbers are a property of *this* scaffold, not the task's ceiling;
-containers were verified on Podman, not Docker (compose targets both).
+**Limitations (flagged, not hidden).** The corrected real-agent numbers are
+small-sample (n=6 at 16 turns) and cover one mid-tier model; a fuller sweep
+across budgets and stronger models is the obvious next step. `llm_agent.py`'s
+one-call-per-turn interface is deliberately simple, so its numbers are a property
+of *this* scaffold, not the task's ceiling. Containers were verified on Podman,
+not Docker (compose targets both).
 
 **What I'd do with more time.** Wider real-agent samples and a second model; a
 richer per-turn action space to test how much of the 16-turn gap is scaffold vs.

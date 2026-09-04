@@ -142,35 +142,27 @@ RESULT: PASS
 Naive-profile solve rate is **~9%** — the skill gradient that makes the reward
 trainable rather than a coin flip. Methodology: [docs/calibration.md](docs/calibration.md).
 
-**The scripted "competent" profile is a hand-tuned proxy, not a measurement —
-and testing it against a real model found that out the hard way, then got
-fixed.** `agent.py`'s probabilities are an assumption of what a capable agent
-does; `llm_agent.py` drives the identical live service through an actual
-Gemini model's decisions (one HTTP action per turn, graded by the same
-`harness.grader`, no vulnerability hints). First result: at the same 16-turn
-budget, `gemini-2.5-flash` solved **0/15** — even though the transcripts show
-it independently found the mass-assignment bug and the userinfo SSRF bypass
-with no hints, just too late in the budget.
+**The scripted "competent" profile is a hand-tuned proxy, not a measurement.**
+`agent.py`'s probabilities are an assumption of what a capable agent does;
+`llm_agent.py` drives the identical live service through a real Gemini model
+(one HTTP action per turn, graded by the same `harness.grader`, no vulnerability
+hints). Running it live also surfaced — and I fixed — a bug in my *own* eval
+harness: the agent's JSON extractor used a greedy brace match that swallowed the
+model's action whenever it appended reasoning prose, so actions failed to parse
+and the agent stalled. The corrected extractor decodes the first valid action
+object (see `llm_agent._extract_json`); earlier per-run real-agent figures were
+measured through that bug and are superseded.
 
-That pointed at turn economy, not capability, as the bottleneck — so four
-scaffold fixes were tried, each measured before the next: a **state
-scratchpad** (stop the model burning turns re-deriving a bearer token it
-already has), **enabling the model's reasoning** (`thinking`, previously off
-for cost), a **reasoning-consistency nudge** (traced `thoughtsTokenCount`
-showed the model quietly stopped deliberating after turn 2, right when the
-hard decision was still ahead), and a **pinned-documentation scratchpad**
-(its own API-doc response stays restated instead of relying on long-context
-recall). None tell the model anything about the vulnerability. Nothing
-tested ever reliably solves at the declared 16-turn budget — but at 24 turns,
-every scaffold improvement's signal shows up, topping out at **4/8 = 50%**
-(thinking *off*, full scaffold) — roughly 4x the first real-agent number.
-Counter-intuitively, the identical prompt change made the *thinking* profile
-worse (37.5% → 12.5%): diagnostics suggest it used the extra encouragement to
-deliberate into wrong, more "creative" hypotheses (SQL injection, forging a
-JWT by hand) instead of the actual simple bug. None of this touches
-`task.yaml`'s declared 16-turn budget or the CI-enforced `report.json`; every
-real-agent run lives in its own separately-named `report.llm*.json` file.
-Full numbers and the iteration log:
+**Corrected measurement:** at the declared 16-turn budget, `gemini-2.5-flash`
+solves **0/6** with thinking both on and off. The transcripts show this is honest
+task difficulty, not a harness artifact — the model does recon cleanly and finds
+the operator-gated render endpoint, but reliably misses the key insight that
+arbitrary fields in the session body merge into the token claims (it keeps
+changing `user`, never `role`), so it never escalates. A current mid-tier model
+genuinely does not clear this at 16 turns, which means the scripted proxy's ~92%
+is an optimistic upper bound and the task has real headroom. The gate stays
+pinned to the scripted baseline (`report.json`); real-agent runs live in
+`report.llm-fixed-*.json`. Full detail + reproduce:
 [docs/calibration.md](docs/calibration.md#real-agent-measurement-gemini).
 
 ## Training data, reward quality & robustness

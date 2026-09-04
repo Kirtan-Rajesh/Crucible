@@ -87,7 +87,7 @@ turns; I report that gap honestly and diagnose it rather than hide it. This is t
 most important design discussion — see the calibration section of
 [README.md](README.md) and the full log in
 [docs/calibration.md](docs/calibration.md). The CI gate stays pinned to the
-declared scripted baseline; real-agent runs live in separate `report.llm-v4*.json`
+declared scripted baseline; real-agent runs live in separate `report.llm-fixed-*.json`
 files by design.
 
 ## Originality & AI use
