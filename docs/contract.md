@@ -116,6 +116,8 @@ python -m harness.cli validate   <task>          # schema-check task.yaml/rubric
 python -m harness.cli calibrate  <task>          # reliability + difficulty band (--seed-repeats N, --agent <module>)
 python -m harness.cli gate       <task>          # enforce acceptance targets (CI-friendly)
 python -m harness.cli verify     <task>          # validate + tests + calibrate + gate
+python -m harness.cli export     <task>          # write SFT+RL training data (dataset/)
+python -m harness.cli analyze    <task>          # reward signal-quality report
 python -m harness.cli up/down    <task>          # container environment
 ```
 

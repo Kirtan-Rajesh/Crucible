@@ -12,6 +12,8 @@ Commands:
     calibrate measure reliability + difficulty band -> report.json / report.md
     gate      check the latest report against the task's acceptance targets
     verify    validate, then run task tests, then calibrate + gate (full local check)
+    export    write SFT + RL training data (dataset/) with dense per-step rewards
+    analyze   reward signal-quality report (reward_analysis.md)
 
 <task> is a task name (resolved under tasks/<name>) or a path to a task dir.
 """
@@ -129,9 +131,24 @@ def cmd_verify(task, args):
     return cmd_gate(task, args)
 
 
+def cmd_export(task, args):
+    from harness import export
+    res = export.export(task, rollouts=args.rollouts, mode=args.mode)
+    print(json.dumps(res, indent=2))
+    return 0
+
+
+def cmd_analyze(task, args):
+    from harness import analyze
+    res = analyze.analyze(task, rollouts=args.rollouts, mode=args.mode)
+    print(json.dumps(res, indent=2))
+    return 0
+
+
 COMMANDS = {
     "up": cmd_up, "down": cmd_down, "validate": cmd_validate, "solve": cmd_solve,
     "grade": cmd_grade, "calibrate": cmd_calibrate, "gate": cmd_gate, "verify": cmd_verify,
+    "export": cmd_export, "analyze": cmd_analyze,
 }
 
 

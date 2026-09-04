@@ -102,6 +102,8 @@ python -m harness.cli gate      edge-pivot                        # PASS/FAIL vs
 python -m harness.cli up        edge-pivot                        # containers, foreground
 python -m harness.cli solve     edge-pivot --mode compose
 python -m harness.cli grade     edge-pivot --transcript run.json
+python -m harness.cli export    edge-pivot                        # SFT+RL dataset -> dataset/
+python -m harness.cli analyze   edge-pivot                        # reward signal-quality -> reward_analysis.md
 
 # Real-agent (Gemini) measurement -- separate report, does not touch the CI-enforced one:
 python -m harness.cli calibrate edge-pivot --agent llm_agent --rollouts 15 \

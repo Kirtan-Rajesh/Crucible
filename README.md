@@ -173,11 +173,41 @@ real-agent run lives in its own separately-named `report.llm*.json` file.
 Full numbers and the iteration log:
 [docs/calibration.md](docs/calibration.md#real-agent-measurement-gemini).
 
+## Training data, reward quality & robustness
+
+The harness doesn't just grade — it emits the dataset a training pipeline
+actually consumes, and it measures whether the reward is a *good* signal.
+
+```bash
+python -m harness.cli export  edge-pivot   # -> tasks/edge-pivot/dataset/
+python -m harness.cli analyze edge-pivot   # -> tasks/edge-pivot/reward_analysis.md
+```
+
+- **`dataset/sft.jsonl`** — the reference solution as a tool-call trajectory (a
+  behaviour-cloning demonstration: system + `assistant` `http_request` tool-calls
+  + `tool` observations + the flag).
+- **`dataset/rl.jsonl`** — stochastic rollouts with **dense per-step rewards**
+  straight from the rubric (reward after step *t* = graded score of the prefix up
+  to *t*), plus the final return and a `guard_violation` flag. Schema in
+  `dataset/DATA.md`.
+- **`reward_analysis.md`** — per-stage reach frequency (every checkpoint is
+  exercised, not just 0/max), reward monotonicity **verified** within every
+  rollout, and the property that makes this trainable rather than sparse:
+  **~85–90% of *failed* rollouts still earn partial credit**, so non-solving
+  trajectories still carry signal.
+
+**Reward robustness (red-team).** `tests/test_reward_robustness.py` takes a real
+solve and mutates it into the common reward-hacks — the flag echoed early, the
+flag surfaced outside the authorised final response, a one-turn bare claim — and
+asserts the grader + `guards:` void every one (score 0) while still crediting the
+legitimate solve. It runs under `verify` on both tasks.
+
 ## Repository layout
 
 ```
-harness/            reusable engine (grader, calibrate, gate, validate, runner, cli, schemas)
-tasks/edge-pivot/   reference web task (services, solver, agent + llm_agent, rubric, tests)
+harness/            reusable engine (grader, calibrate, gate, validate, export, analyze, runner, cli, schemas)
+tasks/edge-pivot/   reference web task (services, solver, agent + llm_agent, rubric, tests,
+                    dataset/ SFT+RL export, reward_analysis.md)
 tasks/nonce-forge/  reference crypto task (same shape, ECDSA nonce-reuse)
 docs/               guide.md · contract.md · extending.md · calibration.md
 requirements-tools.txt   tooling deps (solver / grader / calibration)

@@ -58,6 +58,23 @@ Measured on this machine; regenerate any row with
 `gate` enforces these as PASS/FAIL (non-zero exit on any miss) and runs in CI on
 every push. Both tasks currently: **RESULT: PASS**.
 
+## Reward design (the weighted centerpiece)
+
+Beyond the machine-readable rubric, the harness treats reward as a first-class
+deliverable:
+
+- **It emits the actual dataset.** `python -m harness.cli export <task>` writes
+  `dataset/sft.jsonl` (the reference solve as a tool-call demonstration) and
+  `dataset/rl.jsonl` (stochastic rollouts with **dense per-step rewards** from
+  the rubric) — the artifact a training pipeline consumes. Schema in `DATA.md`.
+- **It measures reward quality.** `analyze` → `reward_analysis.md`: every stage
+  is exercised, reward is verified monotonic within each rollout, and **~85–90%
+  of *failed* rollouts still earn partial credit** — the dense signal that makes
+  this trainable, not sparse pass/fail.
+- **It red-teams its own reward.** `tests/test_reward_robustness.py` mutates a
+  real solve into reward-hacks (flag echoed early, flag outside the authorised
+  response, bare claim) and asserts the grader + `guards:` void all of them.
+
 ## The one thing to read closely
 
 The competent solve-rate above is from a **scripted** reference policy — a tuned
