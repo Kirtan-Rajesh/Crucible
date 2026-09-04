@@ -80,6 +80,16 @@ only via the SSRF pivot). Cold build is well under 10 min (~30 s measured). The
 second task runs from its own file:
 `docker compose -f tasks/nonce-forge/compose.yaml up --build`.
 
+> **Docker or Podman?** This was developed and **verified on Podman** (Docker
+> wasn't available on the build machine); the compose file is standard, so either
+> works. For Podman, ensure once that a machine is running
+> (`podman machine init && podman machine start` — macOS/Windows only) and a
+> compose provider is installed (`pip install podman-compose`), then
+> `podman compose up --build` runs the command above verbatim. The harness also
+> auto-detects the engine, so `python -m harness.cli up edge-pivot` works under
+> either. (On a Podman *machine* where the host can't reach `localhost:8080`, use
+> `--mode local` — it needs no engine at all and runs the identical code.)
+
 **Solve it, or drive the harness** (needs Python 3.11):
 
 ```bash
@@ -268,11 +278,14 @@ python -m harness.cli verify edge-pivot --seed-repeats 5   # validate + tests + 
   collector also seeds in decoy documents so the *shape* of a full listing
   isn't memorizable either.
 - **Reproducibility.** Container builds are pinned (`python:3.11.9-slim-bookworm`,
-  pinned deps). Verified end-to-end on Podman for both tasks: cold `--no-cache`
-  builds in 15-31s (target < 10 min), containers healthy in ~9s, full solves
-  14/14 through the real topology via `localhost` after `up`. The harness
-  auto-detects Docker or Podman, and a no-Docker local mode runs the identical
-  code for machines without an engine.
+  pinned deps). Verified end-to-end on **Podman** for both tasks: cold `--no-cache`
+  builds in ~15–31s (target < 10 min), containers healthy in ~9s, and a full
+  14/14 solve through the real topology (edge reaches the internal collector; on
+  this Podman-on-Windows setup host port-forwarding wasn't active, so the
+  containerised solve was driven from a client on the task network — on
+  Docker/Linux `localhost:8080` works directly). The harness auto-detects Docker
+  or Podman, and a no-Docker local mode runs the identical code for machines
+  without an engine.
 - **Ground rules.** Everything runs in isolated, self-owned containers; nothing
   targets third-party systems; the environment is fully offline once built.
 - **AI assistance.** I used an AI coding assistant as a tool while building this.

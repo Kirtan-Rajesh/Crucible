@@ -20,6 +20,12 @@ Builds both services and runs the primary task (`edge-pivot`); edge API on
 http://localhost:8080, collector internal-only. Second task:
 `docker compose -f tasks/nonce-forge/compose.yaml up --build`.
 
+Developed and **verified on Podman** — the compose file is standard, so either
+engine works. Podman: `podman machine start` (macOS/Windows, first time) +
+`pip install podman-compose`, then the same `podman compose up --build`. If a
+Podman machine can't reach `localhost:8080`, the no-engine path
+(`python -m harness.cli solve edge-pivot`, `--mode local`) runs the identical code.
+
 ## Solve it / run the full checks (needs Python 3.11)
 
 ```bash
