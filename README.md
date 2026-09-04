@@ -35,21 +35,35 @@ inherit grading, calibration, and an enforced acceptance gate for free.
 
 ## The idea in one screen
 
+You **write a task** — one folder, any category — as five small files:
+
 ```
-  A TASK (any category)                         THE HARNESS (reused, task-agnostic)
-  ─────────────────────                         ───────────────────────────────────
-  task.yaml    manifest + targets   ─────────►  grader   monotonic staged rewards
-  rubric.yaml  observable checks    ─────────►  calibrate reliability + difficulty band
-  solver.py    reference solution   ─────────►  gate      enforce acceptance criteria
-  agent.py     stochastic policy    ─────────►  runner    container OR no-Docker env
-  compose.yaml runnable environment              cli       one entry point for all of it
+task.yaml      identity, flag regex, environment, and the acceptance targets
+compose.yaml   the runnable challenge itself (its services/ source)
+rubric.yaml    staged rewards: one observable check + a score, per stage
+solver.py      a reference solution that reliably retrieves the flag
+agent.py       a stochastic policy, used only to measure difficulty
 ```
 
-Satisfy the contract (five small files, two tiny code interfaces — see
-[docs/contract.md](docs/contract.md)) and the harness does the rest. The reusable
-asset is the contract, not any one challenge — proved by shipping a second task,
-`nonce-forge` (crypto), on the identical harness; [docs/extending.md](docs/extending.md)
-sketches the remaining categories (pwn, rev, forensics).
+The **harness then does the rest for every task, unchanged** — you don't touch
+its code:
+
+```
+up         stand the environment up (containers, or no-Docker local mode)
+solve      run the solver and record a transcript of each action it takes
+grade      score a transcript against rubric.yaml (dense, monotonic credit)
+calibrate  replay agent.py many times -> reliability + difficulty band
+gate       PASS / FAIL the acceptance targets from task.yaml (CI-ready)
+export     emit SFT + RL training data with per-step rewards
+```
+
+Each is invoked as `python -m harness.cli <command> <task>` (see Quickstart below).
+
+So the reusable asset is the **contract** (those five files — see
+[docs/contract.md](docs/contract.md)), not any one challenge. We proved it by
+shipping a second task, `nonce-forge` (crypto), on the identical harness with zero
+changes to it; [docs/extending.md](docs/extending.md) sketches the remaining
+categories (pwn, rev, forensics).
 
 ## Quickstart
 
