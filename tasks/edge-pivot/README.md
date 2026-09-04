@@ -4,8 +4,12 @@ An original, competition-level **web** challenge: a realistic internal telemetry
 platform where the flag lives on a service you cannot reach directly. It is the
 reference task for the Crucible harness.
 
-- **Category:** web (representative: multi-step reasoning over a stateful HTTP
-  service, every action an observable signal).
+- **Category:** web — and representative of it: the challenge chains the
+  canonical web-CTF bug classes (broken access control via **mass assignment**,
+  **SSRF**, and **broken function-level authorization**) over a stateful HTTP
+  API, which is exactly what web challenges test, with every action producing a
+  clean observable HTTP signal. Bonus (other categories):
+  [docs/extending.md](../../docs/extending.md).
 - **Flag format:** `flag{...}` — regex `flag\{[a-z0-9_]{8,}\}`. The exact value is
   derived from `CRUCIBLE_SEED`; the default instance is
   `flag{edge_pivot_556ebc60584f}`.
