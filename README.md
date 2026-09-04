@@ -209,7 +209,7 @@ harness/            reusable engine (grader, calibrate, gate, validate, export, 
 tasks/edge-pivot/   reference web task (services, solver, agent + llm_agent, rubric, tests,
                     dataset/ SFT+RL export, reward_analysis.md)
 tasks/nonce-forge/  reference crypto task (same shape, ECDSA nonce-reuse)
-docs/               guide.md · contract.md · extending.md · calibration.md
+docs/               guide.md · contract.md · extending.md · calibration.md · walkthrough.md
 requirements-tools.txt   tooling deps (solver / grader / calibration)
 .env                GEMINI_API_KEY for the real-agent measurement (git-ignored)
 ```

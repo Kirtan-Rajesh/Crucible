@@ -23,6 +23,9 @@ python -m harness.cli verify nonce-forge --seed-repeats 5
 Containers (Docker or Podman): `python -m harness.cli up edge-pivot`, then
 `solve edge-pivot --mode compose`.
 
+*(For the live session: [docs/walkthrough.md](docs/walkthrough.md) has a rehearsed
+demo script and an anticipated-questions sheet.)*
+
 ## Deliverables → where they are
 
 | Required deliverable | Location |
