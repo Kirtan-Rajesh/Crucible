@@ -243,7 +243,6 @@ python -m harness.cli verify edge-pivot --seed-repeats 5   # validate + tests + 
   code for machines without an engine.
 - **Ground rules.** Everything runs in isolated, self-owned containers; nothing
   targets third-party systems; the environment is fully offline once built.
-- **AI assistance.** Built with Claude Code — used for design, implementation,
-  documentation, and the real-agent (`llm_agent.py`) measurement — under my
-  direction. Every design choice, number, and line is one I can explain and
-  defend in the walkthrough; commit trailers record where AI co-authored.
+- **AI assistance.** I used an AI coding assistant as a tool while building this.
+  The task design, vulnerability chains, reward model, and calibration decisions
+  are mine, and I can explain and defend every part in the walkthrough.

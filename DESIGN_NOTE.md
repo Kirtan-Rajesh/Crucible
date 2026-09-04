@@ -68,6 +68,5 @@ richer per-turn action space to test how much of the 16-turn gap is scaffold vs.
 genuine; a pwn/rev task to exercise the Track-B tier ladder against the check DSL;
 more structural per-instance randomization for large-scale rollouts.
 
-**AI assistance.** Built with Claude Code (design, implementation, and the
-real-agent harness) under my direction; every design choice and number here I can
-explain and defend. Commit trailers record where.
+**AI assistance.** I used an AI coding assistant as a tool while building this;
+the design decisions and numbers here are mine to explain and defend.

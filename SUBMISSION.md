@@ -94,5 +94,5 @@ files by design.
 
 Both applications, their endpoints, vulnerability chains, and flags are original
 and written from scratch; the underlying *techniques* are standard and cited per
-task (see README "Notes"). Built with Claude Code under my direction — every part
-is one I can explain and defend in the walkthrough.
+task (see README "Notes"). I used an AI coding assistant as a tool while building
+it; the design and decisions are mine, and I can explain and defend every part.

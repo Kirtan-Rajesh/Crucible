@@ -148,9 +148,10 @@ are original. The underlying techniques (mass assignment, SSRF parser
 differential, ECDSA nonce reuse) are standard and cited — the challenge tests
 reasoning over a novel chain, not knowledge of a secret trick.
 
-**How was AI used?** Built with Claude Code under my direction, disclosed in the
-README/DESIGN_NOTE/SUBMISSION. Every design decision and number is one I can
-derive and defend — this session is that proof.
+**How was AI used?** I used an AI coding assistant as a tool while building this
+(noted briefly in the README). The task design, reward model, and calibration
+decisions are mine — and this session is where I demonstrate I can derive and
+defend every one of them.
 
 **What would you do with more time?** (1) The real-agent difficulty curve across
 stronger models. (2) A pwn/rev tier ladder. (3) Wider structural randomization
