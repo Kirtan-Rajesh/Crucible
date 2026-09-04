@@ -11,13 +11,25 @@ fiddly; writing many, consistently, is the real problem. Crucible makes the
 evaluation machinery reusable: you author a task against a small contract and
 inherit grading, calibration, and an enforced acceptance gate for free.
 
-> Built for the "Cybersecurity Training-Data Design" assignment (Track A). The
-> deliverable is one deeply-worked task **plus** the reusable harness it stands
-> on, so the same rigor scales past a single challenge.
+> **Reviewers / evaluators — start here.** This is the **Track A** submission for
+> the "Cybersecurity Training-Data Design" assignment (one deeply-worked task plus
+> the reusable harness it stands on). The fastest way to grade it:
 >
-> New to this project or the topic? Read **[docs/guide.md](docs/guide.md)** —
-> a from-scratch explanation of what this is, why it exists, and how every
-> piece works, with no assumed prior context.
+> - 🗺️ **[SUBMISSION.md](SUBMISSION.md)** — the map: every requirement and
+>   acceptance number, each linked to where it's satisfied, plus a 60-second run.
+> - ▶️ **Run it (fresh machine, one command):** `docker compose up --build`
+> - 🧩 **The two original tasks:** [edge-pivot (web)](tasks/edge-pivot/README.md) ·
+>   [nonce-forge (crypto)](tasks/nonce-forge/README.md)
+> - 🎯 **Staged-reward rubric** (the weighted centerpiece):
+>   [rubric.yaml](tasks/edge-pivot/rubric.yaml), graded by
+>   [harness/grader.py](harness/grader.py)
+> - ✅ **Reference solution:** [solver.py](tasks/edge-pivot/solver.py) ·
+>   **Calibration:** [report.md](tasks/edge-pivot/report.md) ·
+>   **1-page design note:** [DESIGN_NOTE.md](DESIGN_NOTE.md)
+> - 🎤 **For the live walkthrough:** [docs/walkthrough.md](docs/walkthrough.md) ·
+>   new to the topic? [docs/guide.md](docs/guide.md) explains it from scratch.
+>
+> The rest of this README is the harness/product overview.
 
 ---
 
