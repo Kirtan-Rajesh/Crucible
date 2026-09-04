@@ -41,22 +41,28 @@ sketches the remaining categories (pwn, rev, forensics).
 
 ## Quickstart
 
+**Stand up the challenge on a fresh machine — one command, only a container
+engine needed (no Python):**
+
+```bash
+docker compose up --build          # or:  podman compose up --build
+```
+
+That builds both services and runs the primary task (`edge-pivot`): the edge API
+is on http://localhost:8080; the collector has **no** published port (reach it
+only via the SSRF pivot). Cold build is well under 10 min (~30 s measured). The
+second task runs from its own file:
+`docker compose -f tasks/nonce-forge/compose.yaml up --build`.
+
+**Solve it, or drive the harness** (needs Python 3.11):
+
 ```bash
 pip install -r requirements-tools.txt
-
-# Solve the reference task with no container engine (identical code, local procs):
-python -m harness.cli solve edge-pivot
-
-# …or on real containers (Docker or Podman):
-python -m harness.cli up    edge-pivot          # build + run
-python -m harness.cli solve edge-pivot --mode compose
-
-# Measure calibration, then enforce the acceptance targets:
-python -m harness.cli calibrate edge-pivot
-python -m harness.cli gate      edge-pivot
-
-# Everything at once (validate + tests + calibrate + gate):
-python -m harness.cli verify    edge-pivot
+python -m harness.cli solve  edge-pivot                 # solve + grade (no engine needed: runs identical code as local procs)
+python -m harness.cli solve  edge-pivot --mode compose  # …or against the running containers
+python -m harness.cli calibrate edge-pivot              # reliability + difficulty band
+python -m harness.cli gate      edge-pivot              # enforce acceptance targets
+python -m harness.cli verify    edge-pivot              # validate + tests + calibrate + gate
 ```
 
 Every command also works on the second reference task: swap `edge-pivot` for

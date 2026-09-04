@@ -1,0 +1,58 @@
+# Root convenience entry point for the acceptance criterion:
+#
+#     docker compose up --build          # (or: podman compose up --build)
+#
+# stands up the primary reference task (edge-pivot) on a fresh machine with a
+# single command, no Python or harness install required. The edge API is then on
+# http://localhost:8080; the collector has no published port (reachable only via
+# the SSRF pivot). Solve it with the reference solution (see README "Quickstart").
+#
+# This mirrors tasks/edge-pivot/compose.yaml (the per-task file the harness uses)
+# with build contexts rooted at the repo; keep the two in sync. The second task
+# runs from its own file: docker compose -f tasks/nonce-forge/compose.yaml up --build
+
+services:
+  collector:
+    build: ./tasks/edge-pivot/services/collector
+    container_name: edge-pivot-collector
+    environment:
+      CRUCIBLE_SEED: "${CRUCIBLE_SEED:-crucible-default}"
+    networks: [internal]
+    mem_limit: 256m
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  edge:
+    build: ./tasks/edge-pivot/services/edge
+    container_name: edge-pivot-edge
+    ports:
+      - "8080:8080"
+    environment:
+      CRUCIBLE_SEED: "${CRUCIBLE_SEED:-crucible-default}"
+    depends_on:
+      collector:
+        condition: service_healthy
+    networks: [internal, public]
+    mem_limit: 256m
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+networks:
+  internal:
+    internal: true
+  public:

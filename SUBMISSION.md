@@ -10,18 +10,25 @@ delivered as **Crucible** — a reusable authoring/reward/calibration harness �
 changes). Start at [README.md](README.md); newcomers can read
 [docs/guide.md](docs/guide.md) from scratch.
 
-## Run it in 60 seconds (no container engine needed)
+## Build & run — one command on a fresh machine (only Docker/Podman)
+
+```bash
+docker compose up --build          # or:  podman compose up --build
+```
+
+Builds both services and runs the primary task (`edge-pivot`); edge API on
+http://localhost:8080, collector internal-only. Second task:
+`docker compose -f tasks/nonce-forge/compose.yaml up --build`.
+
+## Solve it / run the full checks (needs Python 3.11)
 
 ```bash
 python -m venv .venv && . .venv/Scripts/activate      # or .venv/bin/activate
 pip install -r requirements-tools.txt
-python -m harness.cli solve  edge-pivot               # solve + grade
+python -m harness.cli solve  edge-pivot               # solve + grade (no engine needed)
 python -m harness.cli verify edge-pivot --seed-repeats 5   # validate + tests + calibrate + gate
 python -m harness.cli verify nonce-forge --seed-repeats 5
 ```
-
-Containers (Docker or Podman): `python -m harness.cli up edge-pivot`, then
-`solve edge-pivot --mode compose`.
 
 *(For the live session: [docs/walkthrough.md](docs/walkthrough.md) has a rehearsed
 demo script and an anticipated-questions sheet.)*
@@ -31,7 +38,7 @@ demo script and an anticipated-questions sheet.)*
 | Required deliverable | Location |
 |---|---|
 | Challenge source + runnable environment | `tasks/<task>/services/`, `tasks/<task>/compose.yaml` |
-| One-command build/run | `python -m harness.cli up <task>` (Docker/Podman); or `--mode local` |
+| One-command build/run | `docker compose up --build` at the repo root (Docker or Podman; no Python) |
 | Reference solution | `tasks/<task>/solver.py` |
 | Staged-reward rubric (machine-readable) | `tasks/<task>/rubric.yaml` (+ JSON Schema `harness/schema/`) |
 | The grader that consumes it | `harness/grader.py` |
