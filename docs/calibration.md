@@ -165,8 +165,7 @@ cost, not about whether the underlying insight is learnable.
 None of this touches `task.yaml`'s declared 16-turn acceptance budget or
 `report.json`, which stay pinned to the scripted-proxy baseline the CI gate
 reads -- every real-agent run lives in its own separately-named
-`report.llm-v3*.json` / `report.llm-v4*.json` file, for exactly the reason
-given above.
+`report.llm-v4*.json` file, for exactly the reason given above.
 
 Reproduce (costs real Gemini API calls; needs `GEMINI_API_KEY`):
 ```bash

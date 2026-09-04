@@ -2,12 +2,13 @@
   "task_id": "edge-pivot",
   "mode": "local",
   "turn_budget": 16,
+  "agent": "agent",
   "reliability": {
     "runs": 16,
     "successes": 16,
     "reliability": 1.0,
-    "median_solve_s": 0.645,
-    "max_solve_s": 0.764,
+    "median_solve_s": 0.448,
+    "max_solve_s": 0.484,
     "solve_turns": 6
   },
   "bands": [

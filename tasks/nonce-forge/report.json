@@ -7,8 +7,8 @@
     "runs": 16,
     "successes": 16,
     "reliability": 1.0,
-    "median_solve_s": 0.556,
-    "max_solve_s": 0.747,
+    "median_solve_s": 0.418,
+    "max_solve_s": 0.484,
     "solve_turns": 5
   },
   "bands": [
