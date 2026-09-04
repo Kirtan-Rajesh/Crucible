@@ -97,6 +97,30 @@ most important design discussion — see the calibration section of
 declared scripted baseline; real-agent runs live in separate `report.llm-fixed-*.json`
 files by design.
 
+### Reproduce the real-agent run (optional — the only step needing an API key)
+
+Everything else — building/running the challenge, the reference solution, the
+rubric, the scripted-agent calibration, the gate, and CI — needs **no API key**.
+Only reproducing the *real-agent* measurement calls Gemini, so it needs a key:
+
+```bash
+export GEMINI_API_KEY=...          # or put GEMINI_API_KEY=... in a .env at repo root (git-ignored)
+
+# Aggregate solve rate + written report (starts its own local stack):
+python -m harness.cli calibrate edge-pivot --agent llm_agent --rollouts 6 \
+    --skip-reliability --report-name report.llm-fixed-b16      # -> prints bands, writes report.llm-fixed-b16.{json,md}
+
+# Watch the model attack it, one action per turn (see its decisions + the responses):
+python -m harness.cli up edge-pivot        # terminal 1 (or: python tasks/edge-pivot/run_local.py)
+GEMINI_API_KEY=... python tasks/edge-pivot/llm_agent.py \
+    --base http://localhost:8080 --budget 16 --verbose        # terminal 2
+```
+
+The `--verbose` run prints each turn's chosen HTTP request and the server's
+response, then the final `{solved, turns}`; `calibrate` prints the solve rate and
+writes the report files. (Gemini's private "thinking" tokens aren't shown — only
+the model's chosen actions and observations.)
+
 ## Originality & AI use
 
 Both applications, their endpoints, vulnerability chains, and flags are original

@@ -182,15 +182,27 @@ None of this touches `task.yaml`'s declared 16-turn acceptance budget or
 reads -- every real-agent run lives in its own separately-named
 `report.llm-fixed*.json` file, for exactly the reason given above.
 
-Reproduce (costs real Gemini API calls; needs `GEMINI_API_KEY`):
+Reproduce (this is the ONLY part that calls an external API; everything else in
+this repo runs with no key). Set a key first — either an env var or a `.env` at
+the repo root (git-ignored):
 ```bash
-# Baseline profile (thinking off) and the thinking-enabled profile both run
-# automatically -- PROFILES in llm_agent.py has both:
+export GEMINI_API_KEY=...           # or: echo "GEMINI_API_KEY=..." > .env
+
+# Aggregate solve rate + written report (starts its own local stack). Both
+# profiles (thinking off / on) run automatically -- PROFILES in llm_agent.py:
 python -m harness.cli calibrate edge-pivot --agent llm_agent --rollouts 6 \
     --skip-reliability --report-name report.llm-fixed-b16          # budget 16 (task default)
 python -m harness.cli calibrate edge-pivot --agent llm_agent --rollouts 6 \
     --skip-reliability --report-name report.llm-fixed-b24 --budget 24
+
+# Watch the model's decisions turn by turn (start the stack first):
+python -m harness.cli up edge-pivot                                # terminal 1
+python tasks/edge-pivot/llm_agent.py --base http://localhost:8080 \
+    --budget 16 --verbose                                          # terminal 2
 ```
+`--verbose` prints each turn's chosen request + the server's response, then the
+final `{solved, turns}`. Gemini's private reasoning tokens are not shown — only
+the model's chosen actions and the observations it saw.
 
 ## Reproduce
 
