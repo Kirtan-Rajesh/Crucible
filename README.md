@@ -204,7 +204,17 @@ changing `user`, never `role`), so it never escalates. A current mid-tier model
 genuinely does not clear this at 16 turns, which means the scripted proxy's ~92%
 is an optimistic upper bound and the task has real headroom. The gate stays
 pinned to the scripted baseline (`report.json`); real-agent runs live in
-`report.llm-fixed-*.json`. Full detail + reproduce:
+`report.llm-fixed-*.json`.
+
+That headroom is real, not a dead end: `llm_agent.py --no-limit` removes the
+fixed budget (runs until solved instead of stopping at 16) and, in one such
+run, the same model **solved it in 28 turns** — full chain, real flag, same
+grader — after trying a few wrong search terms before landing on the one that
+surfaces the private key. Transcript:
+[tasks/edge-pivot/no_limit_solve_evidence.log](tasks/edge-pivot/no_limit_solve_evidence.log).
+So the task is demonstrably solvable by a real, unhinted model; 16 turns is
+just not enough of a budget for it yet — that gap is itself useful signal.
+Full detail + reproduce:
 [docs/calibration.md](docs/calibration.md#real-agent-measurement-gemini).
 
 ## Training data, reward quality & robustness

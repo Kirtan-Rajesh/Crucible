@@ -96,7 +96,9 @@ deliverable:
 The competent solve-rate above is from a **scripted** reference policy — a tuned
 assumption, not a measurement. I tested it against a real model
 (`tasks/edge-pivot/llm_agent.py`, Gemini) and it does *not* hit that band at 16
-turns; I report that gap honestly and diagnose it rather than hide it. This is the
+turns; I report that gap honestly and diagnose it rather than hide it — but it's
+a budget gap, not a dead end: an uncapped run (`--no-limit`, see below) has the
+same model solving it for real in 28 turns, full chain, real flag. This is the
 most important design discussion — see the calibration section of
 [README.md](README.md) and the full log in
 [docs/calibration.md](docs/calibration.md). The CI gate stays pinned to the

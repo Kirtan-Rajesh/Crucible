@@ -74,6 +74,40 @@ impossible (fail < 80%). *Measured* (5 batches × 100 rollouts,
 > **before** this fix and are kept only as a record of the scaffold exploration;
 > treat their specific solve rates as unreliable.
 
+### Proof of solvability: an uncapped run
+
+`0/6 at 16 turns` shows the *declared* budget is genuinely hard, not that the
+task is unsolvable by a real model. To separate those two claims, `llm_agent.py`
+supports `--no-limit`: instead of stopping at a fixed budget, it keeps going
+(up to a 200-turn safety cap) until the grader marks the transcript solved.
+This changes nothing about what counts as solved or how credit is scored --
+`run_rollout` already exits the instant `grade(...)["solved"]` is true; the
+flag only removes the artificial cutoff.
+
+One such run (`gemini-2.5-flash`, no hints, same live service, same grader)
+**solved it in 28 turns**: recon → mass-assignment (`role: operator`) → SSRF
+pivot via the userinfo bypass → several wrong search terms against the
+collector (`flag`, `/flag`, `secret`) before landing on the one that works
+(`q=key`) → recovered the deploy key → replayed it to `/api/reports/publish`
+→ `{"flag": "flag{edge_pivot_...}", "status": "published"}`. Full transcript:
+`tasks/edge-pivot/no_limit_solve_evidence.log`.
+
+**Reading this honestly:** this is n=1, not a solve-rate measurement, and
+16 turns clearly is not enough for this model on this scaffold. But it closes
+the more important question -- the task is not a trick with no real solution
+path reachable by an unhinted model, it is reachable, just not reliably within
+the declared budget yet. That is itself useful calibration signal: the gap
+between "solvable in principle" (28 turns, this run) and "reliably solvable at
+the declared budget" (0/6 at 16) is exactly the kind of headroom a real
+training pipeline would want to know about before trusting a budget.
+
+Reproduce:
+```bash
+python tasks/edge-pivot/run_local.py                                   # terminal 1
+python tasks/edge-pivot/llm_agent.py --base http://127.0.0.1:8080 \
+    --no-limit --verbose                                               # terminal 2
+```
+
 The scripted policy above is a *proxy* by construction (see `agent.py`'s
 docstring): its probabilities are an assumption about what a competent agent
 does, not a measurement of one. `tasks/edge-pivot/llm_agent.py` closes that
