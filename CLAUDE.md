@@ -65,6 +65,7 @@ docs/
                     real-agent (Gemini) findings
 README.md          the pitch / overview
 DESIGN_NOTE.md     1-page design rationale + roadmap
+.env.example       template: `cp .env.example .env` then fill in a real GEMINI_API_KEY
 .env               GEMINI_API_KEY (git-ignored; never commit this)
 ```
 

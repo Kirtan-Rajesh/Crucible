@@ -127,7 +127,7 @@ def solve(base, recorder, verbose=True):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default="http://127.0.0.1:8080")
+    ap.add_argument("--base", default="http://127.0.0.1:8090")
     ap.add_argument("--transcript", default=None)
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args()

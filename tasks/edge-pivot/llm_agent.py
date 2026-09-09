@@ -303,11 +303,39 @@ def _summarize_response(resp):
     return body, text[:2000]
 
 
+_PLACEHOLDER_KEY_MARKERS = ("your_key", "your-key", "yourkey", "changeme",
+                           "xxxxxxxx", "<", ">", "insert_key", "api_key_here")
+
+
+def _validate_api_key(api_key):
+    """Fail fast and clearly on an obvious placeholder, instead of spending
+    the whole turn budget on repeated silent 400s from the real API.
+
+    Hit in practice: an earlier example command in this project's own docs
+    used `"your_key"` as fill-in-the-blank placeholder text; copy-pasting it
+    verbatim set GEMINI_API_KEY to that literal string, and every turn then
+    failed with an opaque "400 Bad Request" that looked like a broken agent
+    rather than a bad credential. Real Gemini keys vary in shape (the
+    AIzaSy... form from Google AI Studio, or a token from another auth flow)
+    so this only rejects clearly-wrong values, not a stricter format."""
+    lowered = api_key.lower()
+    if any(marker in lowered for marker in _PLACEHOLDER_KEY_MARKERS):
+        raise RuntimeError(
+            f"GEMINI_API_KEY looks like a placeholder ({api_key!r}), not a "
+            "real key -- copy an actual key from https://aistudio.google.com/apikey "
+            "into .env (see .env.example) or your environment.")
+    if len(api_key) < 20:
+        raise RuntimeError(
+            f"GEMINI_API_KEY is only {len(api_key)} characters, too short to "
+            "be a real key -- check .env for a truncated or placeholder value.")
+
+
 def run_rollout(base, profile, budget=16, seed=None, verbose=False):
     _load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY not set (env var or .env at repo root)")
+    _validate_api_key(api_key)
 
     rubric = yaml.safe_load((TASK_DIR / "rubric.yaml").read_text(encoding="utf-8"))
     rec = Recorder()

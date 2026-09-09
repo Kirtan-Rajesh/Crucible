@@ -245,6 +245,7 @@ tasks/edge-pivot/   reference web task (services, solver, agent + llm_agent, rub
 tasks/nonce-forge/  reference crypto task (same shape, ECDSA nonce-reuse)
 docs/               guide.md · contract.md · extending.md · calibration.md · walkthrough.md
 requirements-tools.txt   tooling deps (solver / grader / calibration)
+.env.example        template for .env -- copy it, fill in a real key, never commit the copy
 .env                GEMINI_API_KEY for the real-agent measurement (git-ignored)
 ```
 

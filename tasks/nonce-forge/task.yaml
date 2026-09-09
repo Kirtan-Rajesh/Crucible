@@ -11,7 +11,7 @@ flag:
 
 environment:
   compose: compose.yaml
-  edge_url: http://127.0.0.1:8080
+  edge_url: http://127.0.0.1:8090   # not 8080/8081: avoids edge-pivot AND common dev-tool ports
   local_runner: run_local:LocalStack
 
 rubric: rubric.yaml

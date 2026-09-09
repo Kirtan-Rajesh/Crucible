@@ -186,7 +186,8 @@ Reproduce (this is the ONLY part that calls an external API; everything else in
 this repo runs with no key). Set a key first — either an env var or a `.env` at
 the repo root (git-ignored):
 ```bash
-export GEMINI_API_KEY=...           # or: echo "GEMINI_API_KEY=..." > .env
+cp .env.example .env && $EDITOR .env   # fill in a real key -- see .env.example
+# or: export GEMINI_API_KEY=...        # a real key; llm_agent.py rejects an obvious placeholder
 
 # Aggregate solve rate + written report (starts its own local stack). Both
 # profiles (thinking off / on) run automatically -- PROFILES in llm_agent.py:

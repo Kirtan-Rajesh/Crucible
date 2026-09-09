@@ -110,7 +110,8 @@ rubric, the scripted-agent calibration, the gate, and CI — needs **no API key*
 Only reproducing the *real-agent* measurement calls Gemini, so it needs a key:
 
 ```bash
-export GEMINI_API_KEY=...          # or put GEMINI_API_KEY=... in a .env at repo root (git-ignored)
+cp .env.example .env && $EDITOR .env   # fill in a real key (see .env.example for where to get one)
+# or: export GEMINI_API_KEY=...        # a real key, not a placeholder -- llm_agent.py validates and rejects one
 
 # Aggregate solve rate + written report (starts its own local stack):
 python -m harness.cli calibrate edge-pivot --agent llm_agent --rollouts 6 \
