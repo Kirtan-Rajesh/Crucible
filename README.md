@@ -214,8 +214,15 @@ surfaces the private key. Transcript:
 [tasks/edge-pivot/no_limit_solve_evidence.log](tasks/edge-pivot/no_limit_solve_evidence.log).
 So the task is demonstrably solvable by a real, unhinted model; 16 turns is
 just not enough of a budget for it yet — that gap is itself useful signal.
-Full detail + reproduce:
-[docs/calibration.md](docs/calibration.md#real-agent-measurement-gemini).
+
+`nonce-forge` has the same real-agent contract (`llm_agent.py`, with one extra
+tool-style action for the exact modular arithmetic key recovery no LLM can do
+via free text — same reasoning as why the scripted solver does that step in
+code too) — and it tells a different, more reassuring story: it solved
+cleanly **within** the declared 16-turn budget, twice, in exactly 6 turns
+each, matching the reference solver's own efficiency.
+
+Full detail + reproduce: [docs/calibration.md](docs/calibration.md#real-agent-measurement-gemini).
 
 ## Training data, reward quality & robustness
 

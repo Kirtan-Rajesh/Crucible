@@ -6,7 +6,7 @@ Environment mode: **local**   turn budget: **16**   agent: **agent**   (regenera
 
 - Successes: **16/16** (reliability 100.0%)
 - Reference solve turns: **6**
-- Median wall-clock: **0.653 s**, max **0.784 s**
+- Median wall-clock: **0.884 s**, max **1.274 s**
 
 ## Difficulty band (live agent)
 
